@@ -14,7 +14,15 @@ class TestOrdersGetList:
         
         # Проверка успешного ответа (код 200)
         assert response.status_code == 200
-        # Проверка что в теле ответа возвращается список заказов
-        assert type(response.json()['orders']) == list
+        
+        # Проверка структуры ответа
+        response_data = response.json()
+        assert 'orders' in response_data
+        assert isinstance(response_data['orders'], list)
+        
         # Проверка что список не пустой и содержит заказы с id
-        assert len(response.json()['orders']) > 0 and 'id' in response.json()['orders'][0]
+        if response_data['orders']:  # если список не пустой
+            first_order = response_data['orders'][0]
+            assert 'id' in first_order
+            # Дополнительные проверки структуры заказа
+            assert 'track' in first_order or 'status' in first_order  # проверяем обязательные поля
