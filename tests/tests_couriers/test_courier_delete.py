@@ -32,8 +32,7 @@ class TestCourierDelete:
             response_data = delete_response.json()
             # ДОБАВЛЕНО: проверка наличия сообщения об ошибке
             assert "message" in response_data
-            # Можно добавить проверку конкретного текста, если известен
-            # assert response_data["message"] == "Конкретное сообщение об ошибке"
+
 
     @allure.title('Проверка ошибки при попытке удаления курьера с несуществующим id')
     def test_courier_delete_error_with_nonexistent_id(self):
@@ -63,7 +62,3 @@ class TestCourierDelete:
             response_data = delete_response.json()
             # ДОБАВЛЕНО: проверка наличия сообщения об ошибке
             assert "message" in response_data
-            # Можно добавить проверку конкретного текста, если известен
-            # assert response_data["message"] == "Конкретное сообщение об ошибке"
-
-            

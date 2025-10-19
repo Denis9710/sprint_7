@@ -17,7 +17,6 @@ def new_courier():
     
     with allure.step('Создание курьера для теста'):
         create_response = requests.post(Urls.URL_courier_create, data=courier_data)
-        # УБРАН АССЕРТ - только логика без проверок
         if create_response.status_code != 201:
             return {'data': courier_data, 'id': None, 'error': f'Create failed: {create_response.status_code}'}
     
@@ -26,7 +25,6 @@ def new_courier():
             'login': courier_data['login'],
             'password': courier_data['password']
         })
-        # УБРАН АССЕРТ - только получение данных
         courier_id = login_response.json().get("id") if login_response.status_code == 200 else None
     
     result = {
@@ -42,7 +40,26 @@ def new_courier():
             try:
                 requests.delete(f"{Urls.URL_courier_delete}/{courier_id}")
             except Exception:
-                pass  # Игнорируем ошибки при удалении
+                pass
+
+@pytest.fixture
+def clean_courier():
+    """Фикстура для очистки данных курьера"""
+    def _clean_courier(courier_data):
+        try:
+            # Авторизация для получения id
+            login_response = requests.post(Urls.URL_courier_login, data={
+                'login': courier_data['login'],
+                'password': courier_data['password']
+            })
+            if login_response.status_code == 200:
+                courier_id = login_response.json()["id"]
+                # Удаление курьера
+                requests.delete(f"{Urls.URL_courier_delete}/{courier_id}")
+        except Exception:
+            pass
+    
+    return _clean_courier
 
 @pytest.fixture
 def new_order():
@@ -52,7 +69,6 @@ def new_order():
     
     with allure.step('Создание заказа'):
         create_response = requests.post(Urls.URL_orders_create, data=order_payload, headers=headers)
-        # УБРАН АССЕРТ - только логика
         if create_response.status_code != 201:
             return {'track_id': None, 'order_id': None, 'error': f'Create order failed: {create_response.status_code}'}
         
@@ -60,7 +76,6 @@ def new_order():
     
     with allure.step('Получение id заказа по track номеру'):
         get_response = requests.get(f"{Urls.URL_orders_get}?t={track_id}")
-        # УБРАН АССЕРТ - только получение данных
         order_id = get_response.json().get('order', {}).get('id') if get_response.status_code == 200 else None
     
     return {
@@ -68,3 +83,23 @@ def new_order():
         'order_id': order_id
     }
 
+@pytest.fixture
+def courier_and_order(new_courier, new_order):
+    """Универсальная фикстура для создания курьера и заказа"""
+    if 'error' in new_courier or 'error' in new_order:
+        pytest.skip("Failed to create test data")
+    
+    return {
+        'courier': new_courier,
+        'order': new_order
+    }
+
+@pytest.fixture(params=[
+    TestOrderData.order_data_grey,
+    TestOrderData.order_data_black, 
+    TestOrderData.order_data_two_colors,
+    TestOrderData.order_data_no_colors
+])
+def order_data(request):
+    """Фикстура для параметризации данных заказа"""
+    return request.param
