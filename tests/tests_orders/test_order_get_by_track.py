@@ -11,15 +11,18 @@ class TestOrderGetByTrack:
             get_response = requests.get(f"{Urls.URL_orders_get}?t={new_order['track_id']}")
         
         # Проверка успешного получения заказа (код 200) и наличия объекта заказа
-        assert get_response.status_code == 200 and 'order' in get_response.json()
+        assert get_response.status_code == 200
+        assert 'order' in get_response.json()
 
     @allure.title('Проверка ошибки при получении заказа без номера')
     def test_order_get_by_track_error_without_track(self):
         with allure.step('Попытка получить заказ без указания track номера'):
             get_response = requests.get(f"{Urls.URL_orders_get}")
         
-        # Проверка ошибки (код 400)
+        # Проверка ошибки (код 400 и сообщение)
+        expected_message = "Недостаточно данных для поиска"
         assert get_response.status_code == 400
+        assert get_response.json()["message"] == expected_message
 
     @allure.title('Проверка ошибки при получении заказа с несуществующим номером')
     def test_order_get_by_track_error_with_wrong_track(self):
@@ -29,5 +32,7 @@ class TestOrderGetByTrack:
         with allure.step('Попытка получить заказ с несуществующим track номером'):
             get_response = requests.get(f"{Urls.URL_orders_get}?t={wrong_track_id}")
         
-        # Проверка ошибки "заказ не найден" (код 404)
+        # Проверка ошибки "заказ не найден" (код 404 и сообщение)
+        expected_message = "Заказ не найден"
         assert get_response.status_code == 404
+        assert get_response.json()["message"] == expected_message

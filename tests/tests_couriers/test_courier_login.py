@@ -18,7 +18,8 @@ class TestCourierLogin:
             })
         
         # Проверка успешной авторизации (код 200) и наличия id в ответе
-        assert response.status_code == 200 and 'id' in response.text
+        assert response.status_code == 200
+        assert 'id' in response.text
 
     @allure.title('Проверка получения ошибки аутентификации при вводе невалидных данных')
     @allure.description('В тест по очереди передаются наборы данных с несуществующим логином или неверным паролем. '
@@ -32,7 +33,9 @@ class TestCourierLogin:
             response = requests.post(Urls.URL_courier_login, data=nonexistent_credentials)
         
         # Проверка ошибки "учетная запись не найдена" (код 404 и сообщение)
-        assert response.status_code == 404 and response.json() == {'code': 404, 'message': 'Учетная запись не найдена'}
+        expected_response = {'code': 404, 'message': 'Учетная запись не найдена'}
+        assert response.status_code == 404
+        assert response.json() == expected_response
 
     @allure.title('Проверка получения ошибки аутентификации с пустым полем логина или пароля')
     @allure.description('В тест по очереди передаются наборы данных с пустым логином или паролем. '
@@ -46,7 +49,9 @@ class TestCourierLogin:
             response = requests.post(Urls.URL_courier_login, data=empty_credentials)
         
         # Проверка ошибки валидации (код 400 и сообщение)
-        assert response.status_code == 400 and response.json() == {'code': 400, 'message': 'Недостаточно данных для входа'}
+        expected_response = {'code': 400, 'message': 'Недостаточно данных для входа'}
+        assert response.status_code == 400
+        assert response.json() == expected_response
 
     @allure.title('Проверка возврата id при успешной авторизации')
     def test_courier_login_returns_id(self, new_courier):
@@ -57,4 +62,6 @@ class TestCourierLogin:
             })
         
         # Проверка успешной авторизации и наличия числового id в ответе
-        assert response.status_code == 200 and 'id' in response.json() and isinstance(response.json()['id'], int)
+        assert response.status_code == 200
+        assert 'id' in response.json()
+        assert isinstance(response.json()['id'], int)

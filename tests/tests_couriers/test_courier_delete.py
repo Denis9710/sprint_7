@@ -11,7 +11,8 @@ class TestCourierDelete:
             delete_response = requests.delete(f"{Urls.URL_courier_delete}/{new_courier['id']}")
         
         # Проверка успешного удаления (код 200 и тело ответа {"ok": true})
-        assert delete_response.status_code == 200 and delete_response.json() == {"ok": True}
+        assert delete_response.status_code == 200
+        assert delete_response.json() == {"ok": True}
 
     @allure.title('Проверка ошибки при попытке удаления курьера без указания id')
     def test_courier_delete_error_without_id(self):
@@ -29,8 +30,10 @@ class TestCourierDelete:
         with allure.step('Отправка DELETE запроса на удаление с несуществующим id'):
             delete_response = requests.delete(f"{Urls.URL_courier_delete}/{nonexistent_id}")
         
-        # Проверка ошибки (код 404)
+        # Проверка ошибки (код 404 и сообщение)
+        expected_message = "Курьера с таким id нет."
         assert delete_response.status_code == 404
+        assert delete_response.json()["message"] == expected_message
 
     @allure.title('Проверка неуспешного запроса на удаление курьера')
     def test_courier_delete_unsuccessful_request(self):

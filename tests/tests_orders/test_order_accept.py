@@ -18,15 +18,18 @@ class TestOrderAccept:
             accept_response = requests.put(f"{Urls.URL_orders_accept}/{order_id}?courierId={courier_id}")
         
         # Проверка успешного принятия заказа (код 200 и тело ответа {"ok": true})
-        assert accept_response.status_code == 200 and accept_response.json() == {"ok": True}
+        assert accept_response.status_code == 200
+        assert accept_response.json() == {"ok": True}
 
     @allure.title('Проверка ошибки при принятии заказа без id курьера')
     def test_order_accept_error_without_courier_id(self, new_order):
         with allure.step('Попытка принять заказ без указания id курьера'):
             accept_response = requests.put(f"{Urls.URL_orders_accept}/{new_order['order_id']}")
         
-        # Проверка ошибки (код 400)
+        # Проверка ошибки (код 400 и сообщение)
+        expected_message = "Недостаточно данных для поиска"
         assert accept_response.status_code == 400
+        assert accept_response.json()["message"] == expected_message
 
     @allure.title('Проверка ошибки при принятии заказа с неверным id курьера')
     def test_order_accept_error_with_wrong_courier_id(self, new_order):
@@ -36,8 +39,10 @@ class TestOrderAccept:
         with allure.step('Попытка принять заказ с несуществующим id курьера'):
             accept_response = requests.put(f"{Urls.URL_orders_accept}/{new_order['order_id']}?courierId={wrong_courier_id}")
         
-        # Проверка ошибки "курьер не найден" (код 404)
+        # Проверка ошибки "курьер не найден" (код 404 и сообщение)
+        expected_message = "Курьера с таким id не существует"
         assert accept_response.status_code == 404
+        assert accept_response.json()["message"] == expected_message
 
     @allure.title('Проверка ошибки при принятии заказа без id заказа')
     def test_order_accept_error_without_order_id(self, new_courier):
@@ -55,5 +60,7 @@ class TestOrderAccept:
         with allure.step('Попытка принять заказ с несуществующим id заказа'):
             accept_response = requests.put(f"{Urls.URL_orders_accept}/{wrong_order_id}?courierId={new_courier['id']}")
         
-        # Проверка ошибки "заказ не найден" (код 404)
+        # Проверка ошибки "заказ не найден" (код 404 и сообщение)
+        expected_message = "Заказа с таким id не существует"
         assert accept_response.status_code == 404
+        assert accept_response.json()["message"] == expected_message

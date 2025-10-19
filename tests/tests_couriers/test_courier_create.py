@@ -27,11 +27,12 @@ class TestCourierCreate:
             response = requests.post(Urls.URL_courier_create, data=payload_conflict)
         
         # Проверка конфликта (код 409) и сообщения об ошибке
+        expected_message = "Этот логин уже используется. Попробуйте другой."
         assert response.status_code == 409
-        assert response.json()["message"] == "Этот логин уже используется. Попробуйте другой."
+        assert response.json()["message"] == expected_message
 
     @allure.title('Проверка невозможности создания двух одинаковых курьеров')
-    def test_impossibility_create_two_similar(self):
+    def test_impossibility_create_two_similar(self, clean_courier):
         # Создаем уникальные данные для курьера
         payload = {
             'login': h.create_random_login(),
@@ -46,9 +47,13 @@ class TestCourierCreate:
             second_response = requests.post(Urls.URL_courier_create, data=payload)
         
         # Проверка: первый успешен, второй возвращает ошибку конфликта
+        expected_message = "Этот логин уже используется. Попробуйте другой."
         assert first_response.status_code == 201
         assert second_response.status_code == 409
-        assert second_response.json()["message"] == "Этот логин уже используется. Попробуйте другой."
+        assert second_response.json()["message"] == expected_message
+        
+        # Очистка тестовых данных
+        clean_courier(payload)
 
     @allure.title('Проверка получения ошибки при создании курьера с незаполненными обязательными полями')
     @allure.description('В тест по очереди передаются наборы данных с пустым логином или паролем. '
@@ -62,5 +67,6 @@ class TestCourierCreate:
             response = requests.post(Urls.URL_courier_create, data=empty_credentials)
         
         # Проверка ошибки валидации (код 400) и сообщения
+        expected_message = "Недостаточно данных для создания учетной записи"
         assert response.status_code == 400
-        assert response.json()["message"] == "Недостаточно данных для создания учетной записи"
+        assert response.json()["message"] == expected_message
