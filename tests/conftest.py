@@ -17,15 +17,15 @@ def new_courier():
     
     with allure.step('Создание курьера для теста'):
         create_response = requests.post(Urls.URL_courier_create, data=courier_data)
-        if create_response.status_code != 201:
-            return {'data': courier_data, 'id': None, 'error': f'Create failed: {create_response.status_code}'}
+        assert create_response.status_code == 201, f"Failed to create courier: {create_response.status_code}"
     
     with allure.step('Авторизация курьера для получения id'):
         login_response = requests.post(Urls.URL_courier_login, data={
             'login': courier_data['login'],
             'password': courier_data['password']
         })
-        courier_id = login_response.json().get("id") if login_response.status_code == 200 else None
+        assert login_response.status_code == 200, f"Failed to login courier: {login_response.status_code}"
+        courier_id = login_response.json().get("id")
     
     result = {
         'data': courier_data,
@@ -34,65 +34,66 @@ def new_courier():
     
     yield result
     
-    # Гарантированная очистка тестовых данных
-    if courier_id:
-        with allure.step('Удаление тестового курьера'):
-            try:
-                requests.delete(f"{Urls.URL_courier_delete}/{courier_id}")
-            except Exception:
-                pass
+    with allure.step('Удаление тестового курьера'):
+        requests.delete(f"{Urls.URL_courier_delete}/{courier_id}")
 
 @pytest.fixture
 def clean_courier():
     """Фикстура для очистки данных курьера"""
     def _clean_courier(courier_data):
-        try:
-            # Авторизация для получения id
-            login_response = requests.post(Urls.URL_courier_login, data={
-                'login': courier_data['login'],
-                'password': courier_data['password']
-            })
-            if login_response.status_code == 200:
-                courier_id = login_response.json()["id"]
-                # Удаление курьера
-                requests.delete(f"{Urls.URL_courier_delete}/{courier_id}")
-        except Exception:
-            pass
+        login_response = requests.post(Urls.URL_courier_login, data={
+            'login': courier_data['login'],
+            'password': courier_data['password']
+        })
+        login_response.raise_for_status()
+        courier_id = login_response.json()["id"]
+        requests.delete(f"{Urls.URL_courier_delete}/{courier_id}")
     
     return _clean_courier
 
 @pytest.fixture
-def new_order():
+def clean_order():
+    """Фикстура для отмены заказа"""
+    def _clean_order(track_id):
+        requests.put(f"{Urls.URL_orders_create}/cancel?track={track_id}")
+    
+    return _clean_order
+
+@pytest.fixture
+def new_order(clean_order):
     """Универсальная фикстура для создания заказа"""
     order_payload = json.dumps(TestOrderData.order_data_grey)
     headers = {'Content-Type': 'application/json'}
     
     with allure.step('Создание заказа'):
         create_response = requests.post(Urls.URL_orders_create, data=order_payload, headers=headers)
-        if create_response.status_code != 201:
-            return {'track_id': None, 'order_id': None, 'error': f'Create order failed: {create_response.status_code}'}
-        
+        assert create_response.status_code == 201, f"Failed to create order: {create_response.status_code}"
         track_id = create_response.json().get("track")
     
     with allure.step('Получение id заказа по track номеру'):
         get_response = requests.get(f"{Urls.URL_orders_get}?t={track_id}")
-        order_id = get_response.json().get('order', {}).get('id') if get_response.status_code == 200 else None
+        assert get_response.status_code == 200, f"Failed to get order: {get_response.status_code}"
+        order_id = get_response.json().get('order', {}).get('id')
     
-    return {
+    result = {
         'track_id': track_id,
         'order_id': order_id
     }
+    
+    yield result
+    
+    with allure.step('Отмена тестового заказа'):
+        clean_order(track_id)
 
 @pytest.fixture
 def courier_and_order(new_courier, new_order):
     """Универсальная фикстура для создания курьера и заказа"""
-    if 'error' in new_courier or 'error' in new_order:
-        pytest.skip("Failed to create test data")
-    
-    return {
+    result = {
         'courier': new_courier,
         'order': new_order
     }
+    
+    yield result
 
 @pytest.fixture(params=[
     TestOrderData.order_data_grey,
@@ -100,6 +101,24 @@ def courier_and_order(new_courier, new_order):
     TestOrderData.order_data_two_colors,
     TestOrderData.order_data_no_colors
 ])
-def order_data(request):
+def order_data(request, clean_order):
     """Фикстура для параметризации данных заказа"""
-    return request.param
+    order_payload = json.dumps(request.param)
+    headers = {'Content-Type': 'application/json'}
+    
+    with allure.step('Создание заказа для параметризованного теста'):
+        create_response = requests.post(Urls.URL_orders_create, data=order_payload, headers=headers)
+        assert create_response.status_code == 201, f"Failed to create parameterized order: {create_response.status_code}"
+        track_id = create_response.json().get("track")
+    
+    result = {
+        'track_id': track_id,
+        'data': request.param
+    }
+    
+    yield result
+    
+    with allure.step('Отмена параметризованного заказа'):
+        clean_order(track_id)
+
+

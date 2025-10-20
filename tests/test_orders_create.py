@@ -6,8 +6,8 @@ from urls import Urls
 class TestOrderCreate:
 
     @allure.title('Проверка создания заказа с разными параметрами цвета')
-    def test_order_create_color_parametrize_success(self, order_data):
-        order_data_json = json.dumps(order_data)
+    def test_order_create_color_parametrize_success(self, order_data, clean_order):
+        order_data_json = json.dumps(order_data['data'])
         headers = {'Content-Type': 'application/json'}
         
         with allure.step('Отправка POST запроса на создание заказа'):
@@ -20,5 +20,8 @@ class TestOrderCreate:
         assert 'track' in response_data
         assert isinstance(response_data['track'], int)
         assert response_data['track'] > 0
+        
+        # Очистка заказа выполняется в фикстуре order_data
+
 
         

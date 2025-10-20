@@ -15,12 +15,10 @@ class TestCourierLogin:
                 'password': new_courier['data']['password']
             })
         
-        # Проверка успешной авторизации (код 200) и наличия id в ответе
         assert response.status_code == 200
         response_data = response.json()
         assert 'id' in response_data
         assert isinstance(response_data['id'], int)
-        # ДОБАВЛЕНО: проверка что id не пустой
         assert response_data['id'] > 0
         
         clean_courier(new_courier['data'])
@@ -34,12 +32,10 @@ class TestCourierLogin:
         with allure.step('Отправка POST запроса на авторизацию с невалидными данными'):
             response = requests.post(Urls.URL_courier_login, data=nonexistent_credentials)
         
-        # Проверка ошибки "учетная запись не найдена"
         expected_response = {'code': 404, 'message': 'Учетная запись не найдена'}
         assert response.status_code == 404
         response_data = response.json()
         assert response_data == expected_response
-        # ДОБАВЛЕНО: отдельные проверки полей
         assert response_data['code'] == 404
         assert response_data['message'] == 'Учетная запись не найдена'
 
@@ -52,12 +48,10 @@ class TestCourierLogin:
         with allure.step('Отправка POST запроса на авторизацию с пустыми полями'):
             response = requests.post(Urls.URL_courier_login, data=empty_credentials)
         
-        # Проверка ошибки валидации
         expected_response = {'code': 400, 'message': 'Недостаточно данных для входа'}
         assert response.status_code == 400
         response_data = response.json()
         assert response_data == expected_response
-        # ДОБАВЛЕНО: отдельные проверки полей
         assert response_data['code'] == 400
         assert response_data['message'] == 'Недостаточно данных для входа'
 
@@ -69,12 +63,10 @@ class TestCourierLogin:
                 'password': new_courier['data']['password']
             })
         
-        # Проверка успешной авторизации и наличия числового id в ответе
         assert response.status_code == 200
         response_data = response.json()
         assert 'id' in response_data
         assert isinstance(response_data['id'], int)
-        # ДОБАВЛЕНО: проверка что id валидный
         assert response_data['id'] > 0
         
         clean_courier(new_courier['data'])
