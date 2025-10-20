@@ -5,7 +5,7 @@ from urls import Urls
 class TestOrderGetByTrack:
 
     @allure.title('Проверка успешного получения заказа по номеру')
-    def test_order_get_by_track_success(self, new_order, clean_order):
+    def test_order_get_by_track_success(self, new_order):
         with allure.step('Получение заказа по track номеру'):
             get_response = requests.get(f"{Urls.URL_orders_get}?t={new_order['track_id']}")
         
@@ -19,9 +19,6 @@ class TestOrderGetByTrack:
         assert 'id' in order_data
         assert 'track' in order_data
         assert order_data['track'] == new_order['track_id']
-        
-        # Очистка заказа
-        clean_order(new_order['track_id'])
 
     @allure.title('Проверка ошибки при получении заказа без номера')
     def test_order_get_by_track_error_without_track(self):
@@ -50,6 +47,5 @@ class TestOrderGetByTrack:
         # ДОБАВЛЕНО: проверка текста сообщения
         assert "message" in response_data
         assert response_data["message"] == expected_message
-
 
         
