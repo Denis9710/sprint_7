@@ -45,7 +45,7 @@ def clean_courier():
             'login': courier_data['login'],
             'password': courier_data['password']
         })
-        login_response.raise_for_status()
+        assert login_response.status_code == 200, "Failed to login for cleanup"
         courier_id = login_response.json()["id"]
         requests.delete(f"{Urls.URL_courier_delete}/{courier_id}")
     
@@ -55,7 +55,7 @@ def clean_courier():
 def clean_order():
     """Фикстура для отмены заказа"""
     def _clean_order(track_id):
-        requests.put(f"{Urls.URL_orders_create}/cancel?track={track_id}")
+        requests.put(f"{Urls.URL_orders_cancel}?track={track_id}")
     
     return _clean_order
 
@@ -121,4 +121,4 @@ def order_data(request, clean_order):
     with allure.step('Отмена параметризованного заказа'):
         clean_order(track_id)
 
-
+        

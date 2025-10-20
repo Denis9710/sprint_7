@@ -7,3 +7,5 @@ class Urls:
     URL_orders_list = f'{URL_base}api/v1/orders'
     URL_orders_accept = f'{URL_base}api/v1/orders/accept'
     URL_orders_get = f'{URL_base}api/v1/orders/track'
+    URL_orders_cancel = f'{URL_base}api/v1/orders/cancel'  # ДОБАВЛЕН endpoint для отмены заказа
+    
